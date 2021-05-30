@@ -1,3 +1,8 @@
+/*
+ * TODO: Refactor the code in appropriate files
+ * TODO: Refactor event handling for each app
+ * TODO: Find a way to execute terminal commands
+ */
 use std::{
     thread,
     io::stdout,
@@ -7,12 +12,8 @@ use std::{
 };
 
 use tui::{
-    backend::{CrosstermBackend, Backend},
-    terminal::{Terminal, Frame},
-    text::{Span, Spans},
-    widgets::{Block, Tabs, Borders},
-    layout::{Layout, Constraint},
-    style::{Color, Modifier, Style},
+    terminal::{Terminal},
+    backend::{CrosstermBackend},
 };
 
 use crossterm::{
@@ -23,87 +24,11 @@ use crossterm::{
     execute,
 };
 
+pub mod app;
+pub mod tabs;
+use crate::tabs::{TabsState};
+use crate::app::{App, MagLabApp};
 
-
-/// This is the main application that runs the Malware lab
-pub struct MagLabApp<'a> {
-    /// Title of our application
-    pub title: &'a str,
-    /// Status flag if the application should quit
-    pub should_quit: bool,
-    /// A vector of all tabs in out application
-    pub tabs: TabsState<'a>,
-}
-
-impl<'a> MagLabApp<'a> {
-    pub fn new(title: &'a str, tabs: TabsState<'a>) -> MagLabApp<'a> {
-        MagLabApp {
-            title,
-            should_quit: false,
-            tabs,
-        }
-    }
-
-    /// Called when pressing left arrow-key
-    pub fn on_left(&mut self) {
-        self.tabs.previous()
-    }
-
-    /// Called when pressing right arrow-key
-    pub fn on_right(&mut self) {
-        self.tabs.next()
-    }
-
-    /// Called when pressing any other key
-    pub fn on_key(&mut self, c: char) {
-        match c {
-            'q' => {
-                self.should_quit = true;
-            },
-            _ => {}
-        }
-    }
-}
-
-/// Structure describing all the tabs in our application
-pub struct TabsState<'a> {
-    /// A vector containing all the apps. Each tab contains a separate App
-    pub apps: Vec<App<'a>>,
-    /// Index of the active Tab
-    pub index: usize,
-}
-
-impl<'a> TabsState<'a> {
-    /// Create a new TabsState given the `apps`
-    pub fn new(apps: Vec<App<'a>>) -> TabsState<'a> {
-        TabsState { apps, index: 0 }
-    }
-
-    /// Go to the next tab
-    pub fn next(&mut self) {
-        self.index = (self.index + 1) % self.apps.len();
-    }
-
-    /// Go to the previous tab
-    pub fn previous(&mut self) {
-        if self.index > 0 {
-            self.index -= 1;
-        } else {
-            self.index = self.apps.len() - 1;
-        }
-    }
-}
-
-/// Struct to hold an application for each tab
-pub struct App<'a> {
-    pub title: &'a str
-}
-
-impl<'a> App<'a> {
-    pub fn new(title: &'a str) -> App {
-        App { title }
-    }
-}
 
 enum Event<I> {
     Input(I),
@@ -121,7 +46,6 @@ fn main() -> Result<(), Box<dyn Error>>{
 
     // Create a new Backend
     let backend = CrosstermBackend::new(stdout);
-
     // Create a new Terminal
     let mut terminal = Terminal::new(backend)?;
 
@@ -132,7 +56,7 @@ fn main() -> Result<(), Box<dyn Error>>{
     let tick_rate = Duration::from_millis(1000);
 
     // Spanw a new thread that will handle the event pipeline
-    let events_thread = thread::spawn(move || {
+    thread::spawn(move || {
         // Get current time
         let mut last_tick = Instant::now();
 
@@ -160,10 +84,10 @@ fn main() -> Result<(), Box<dyn Error>>{
         }
     });
 
-    let mut tabs = TabsState::new(vec![
-        App::new("FileManager"),
-        App::new("MachO"),
-        App::new("PE"),
+    let tabs = TabsState::new(vec![
+        app::App::new("FileManager"),
+        app::App::new("MachO"),
+        app::App::new("PE"),
     ]);
 
     // Create a new MagLab app
@@ -174,7 +98,7 @@ fn main() -> Result<(), Box<dyn Error>>{
 
     loop {
         // Draw the canvas
-        terminal.draw(|f| draw_app(f, &mut mag_lab_app))?;
+        terminal.draw(|f| mag_lab_app.draw(f))?;
         // Handle user input
         match rx.recv()? {
             Event::Input(event) => match event.code {
@@ -192,7 +116,8 @@ fn main() -> Result<(), Box<dyn Error>>{
                     mag_lab_app.should_quit = true;
                     break;
                 },
-                KeyCode::Char(c) => mag_lab_app.on_key(c),
+                KeyCode::Left => mag_lab_app.on_left(),
+                KeyCode::Right => mag_lab_app.on_right(),
                 _ => {}
             },
 
@@ -208,36 +133,5 @@ fn main() -> Result<(), Box<dyn Error>>{
 
     }
 
-
-    // Join the event thread at the end
-    // let res = events_thread.join();
-
     Ok(())
-}
-
-pub fn draw_app<B: Backend>(f: &mut Frame<B>, mag_lab_app: &mut MagLabApp) {
-    // Overall app layout
-    let layout_constraints = vec![
-        // Tabs block, at least 3 lines
-        Constraint::Length(3),
-        // Rest of the screen
-        Constraint::Min(0)
-    ];
-
-    let chunks = Layout::default()
-        .constraints(layout_constraints.as_ref())
-        .split(f.size());
-
-    let titles = mag_lab_app
-        .tabs
-        .apps
-        .iter()
-        .map(|t| Spans::from(Span::styled(t.title, Style::default().fg(Color::Green))))
-        .collect();
-
-    let tabs = Tabs::new(titles)
-        .block(Block::default().borders(Borders::ALL).title(mag_lab_app.title))
-        .highlight_style(Style::default().fg(Color::Yellow))
-        .select(mag_lab_app.tabs.index);
-    f.render_widget(tabs, chunks[0]);
 }
