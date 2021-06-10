@@ -27,7 +27,7 @@ use crossterm::{
 pub mod app;
 pub mod tabs;
 use crate::tabs::{TabsState};
-use crate::app::{App, MagLabApp};
+use crate::app::{App, MagLabApp, ColumnsState, PluginsState, Plugin};
 
 
 enum Event<I> {
@@ -84,10 +84,30 @@ fn main() -> Result<(), Box<dyn Error>>{
         }
     });
 
+
+    let plugins1 = PluginsState::new(
+        vec![Plugin::FileManager, Plugin::HexView]);
+    let plugins2 = PluginsState::new(vec![Plugin::HexView]);
+    let plugins3 = PluginsState::new(
+        vec![Plugin::FileManager, Plugin::HexView, Plugin::Parser]);
+    let cols1 = ColumnsState::new(vec![plugins1, plugins2, plugins3]);
+    let plugins1 = PluginsState::new(
+        vec![Plugin::FileManager, Plugin::HexView]);
+    let plugins2 = PluginsState::new(vec![Plugin::HexView]);
+    let plugins3 = PluginsState::new(
+        vec![Plugin::FileManager, Plugin::HexView, Plugin::Parser]);
+    let cols2 = ColumnsState::new(vec![plugins2, plugins1, plugins3]);
+    let plugins1 = PluginsState::new(
+        vec![Plugin::FileManager, Plugin::HexView]);
+    let plugins2 = PluginsState::new(vec![Plugin::HexView]);
+    let plugins3 = PluginsState::new(
+        vec![Plugin::FileManager, Plugin::HexView, Plugin::Parser]);
+    let cols3 = ColumnsState::new(vec![plugins3, plugins2, plugins1]);
+
     let tabs = TabsState::new(vec![
-        app::App::new("FileManager"),
-        app::App::new("MachO"),
-        app::App::new("PE"),
+        app::App::new("FileManager", cols1),
+        app::App::new("MachO", cols2),
+        app::App::new("PE", cols3),
     ]);
 
     // Create a new MagLab app
