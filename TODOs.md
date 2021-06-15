@@ -14,3 +14,16 @@ TODO:
     - Connect plugins to input
     - Make plugins output something
     - Figure out how you render different outputs
+8. Make possible so that the user can modifiy his key configuration(use serde).
+9. Make possible so that the user can add new keys with certain functionality
+    - Warn the user if the functionality already exists
+10. Make a state configuration(use serde and jsons):
+    - Save the current tab and application layout/rendering state and
+      functional state so that when the user opens it again, it will be the
+        same place where he left it
+11. Be able to undo a change:
+    - Vim style: Save the last `n` changes in cache/memory so that we can undo
+      and redo things
+12. Create different layout modes to be selected:
+    - For example, make a master window that permanently ocupies half the
+        space and the other plugins the rest of the space

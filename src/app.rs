@@ -1,4 +1,4 @@
-use std::convert::{TryFrom, TryInto};
+use std::convert::{TryFrom};
 
 use tui::{
     terminal::{Frame},
@@ -74,6 +74,24 @@ impl<'a> App<'a> {
         App { title, grid }
     }
 
+    pub fn next_column(&mut self) {
+        self.grid.next();
+    }
+
+    pub fn previous_column(&mut self) {
+        self.grid.previous();
+    }
+
+    pub fn next_line(&mut self) {
+        let col_index = self.grid.index;
+        self.grid.columns[col_index].next();
+    }
+
+    pub fn previous_line(&mut self) {
+        let col_index = self.grid.index;
+        self.grid.columns[col_index].previous();
+    }
+
     pub fn draw<B: Backend>(&mut self, f: &mut Frame<B>, area: Rect) {
         let ncols = self.grid.columns.len();
         let constraints: Vec<Constraint> = self.grid.columns.iter().map(|_|
@@ -96,7 +114,7 @@ impl<'a> App<'a> {
 
             // Distribute the plugins evenly across the column
             let line_constraints: Vec<Constraint> = col.plugins.iter()
-                .map(|plg| {
+                .map(|_| {
                 // TODO: Replace unwrap and be a real programmer
                 Constraint::Percentage(
                     u16::try_from(100usize / nplugins).unwrap())
@@ -109,7 +127,7 @@ impl<'a> App<'a> {
                 .split(col_chunks[i]);
 
             // Now we render each plugin
-            for (j, line) in col.plugins.iter().enumerate() {
+            for (j, _line) in col.plugins.iter().enumerate() {
                 let mut plugin = Block::default().borders(Borders::ALL)
                     .title(format!("Plugin{}", j));
 
@@ -148,14 +166,28 @@ impl<'a> MagLabApp<'a> {
         }
     }
 
-    /// Called when pressing left arrow-key
-    pub fn on_left(&mut self) {
+    pub fn tab_left(&mut self) {
         self.tabs.previous()
     }
 
-    /// Called when pressing right arrow-key
-    pub fn on_right(&mut self) {
+    pub fn tab_right(&mut self) {
         self.tabs.next()
+    }
+
+    pub fn focus_left(&mut self) {
+        self.tabs.apps[self.tabs.index].previous_column();
+    }
+
+    pub fn focus_right(&mut self) {
+        self.tabs.apps[self.tabs.index].next_column();
+    }
+
+    pub fn focus_up(&mut self) {
+        self.tabs.apps[self.tabs.index].previous_line();
+    }
+
+    pub fn focus_down(&mut self) {
+        self.tabs.apps[self.tabs.index].next_line();
     }
 
     /// Called when pressing any other key
