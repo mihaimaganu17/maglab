@@ -127,7 +127,6 @@ fn main() -> Result<(), Box<dyn Error>>{
             Event::Input(event) => {
                 if event == key_conf.quit {
                     mag_lab_app.should_quit = true;
-                    break;
                 } else if event == key_conf.tab_left {
                     mag_lab_app.tab_left();
                 } else if event == key_conf.tab_right {
@@ -147,10 +146,10 @@ fn main() -> Result<(), Box<dyn Error>>{
                 }
             },
 
+            // Currently do nothing on tick
             Event::Tick => {},
         };
 
-        // Currently do nothing on tick
 
         // Check if we should exit the app
         if mag_lab_app.should_quit {
