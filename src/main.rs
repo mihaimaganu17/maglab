@@ -28,7 +28,8 @@ pub mod tabs;
 pub mod keys;
 use crate::keys::{KeyConfig};
 use crate::tabs::{TabsState};
-use crate::app::{App, MagLabApp, ColumnsState, PluginsState, Plugin};
+use crate::app::{App, MagLabApp, ColumnsState, PluginsState, Plugin,
+    FileManager};
 
 
 enum Event<I> {
@@ -54,7 +55,7 @@ fn main() -> Result<(), Box<dyn Error>>{
     let (tx, rx) = mpsc::channel();
 
     // Setup a timeout tick rate
-    let tick_rate = Duration::from_millis(2000);
+    let tick_rate = Duration::from_millis(1000);
 
     // Spanw a new thread that will handle the event pipeline
     thread::spawn(move || {
@@ -85,23 +86,30 @@ fn main() -> Result<(), Box<dyn Error>>{
     });
 
 
+    let fm = FileManager::new(".");
+
     let plugins1 = PluginsState::new(
-        vec![Plugin::FileManager, Plugin::HexView]);
+        vec![Plugin::FileManager(fm), Plugin::HexView]);
     let plugins2 = PluginsState::new(vec![Plugin::HexView]);
+    let fm = FileManager::new(".");
     let plugins3 = PluginsState::new(
-        vec![Plugin::FileManager, Plugin::HexView, Plugin::Parser]);
+        vec![Plugin::FileManager(fm), Plugin::HexView, Plugin::Parser]);
     let cols1 = ColumnsState::new(vec![plugins1, plugins2, plugins3]);
+    let fm = FileManager::new(".");
     let plugins1 = PluginsState::new(
-        vec![Plugin::FileManager, Plugin::HexView]);
+        vec![Plugin::FileManager(fm), Plugin::HexView]);
     let plugins2 = PluginsState::new(vec![Plugin::HexView]);
+    let fm = FileManager::new(".");
     let plugins3 = PluginsState::new(
-        vec![Plugin::FileManager, Plugin::HexView, Plugin::Parser]);
+        vec![Plugin::FileManager(fm), Plugin::HexView, Plugin::Parser]);
     let cols2 = ColumnsState::new(vec![plugins2, plugins1, plugins3]);
+    let fm = FileManager::new(".");
     let plugins1 = PluginsState::new(
-        vec![Plugin::FileManager, Plugin::HexView]);
+        vec![Plugin::FileManager(fm), Plugin::HexView]);
     let plugins2 = PluginsState::new(vec![Plugin::HexView]);
+    let fm = FileManager::new(".");
     let plugins3 = PluginsState::new(
-        vec![Plugin::FileManager, Plugin::HexView, Plugin::Parser]);
+        vec![Plugin::FileManager(fm), Plugin::HexView, Plugin::Parser]);
     let cols3 = ColumnsState::new(vec![plugins3, plugins2, plugins1]);
 
     let tabs = TabsState::new(vec![

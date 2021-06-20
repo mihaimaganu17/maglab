@@ -1,4 +1,7 @@
-use std::convert::{TryFrom};
+use std::{
+    path::{Path},
+    convert::{TryFrom},
+};
 
 use tui::{
     terminal::{Frame},
@@ -6,30 +9,87 @@ use tui::{
     text::{Span, Spans},
     style::{Style, Color},
     layout::{Layout, Constraint, Rect, Direction},
-    widgets::{Block, Tabs, Borders, BorderType},
+    widgets::{Block, Tabs, Borders, BorderType, ListItem, ListState, List},
 };
 
 use crate::tabs::TabsState;
 
-pub enum Plugin {
-    FileManager,
+pub enum Plugin<'a> {
+    FileManager(FileManager<'a>),
     HexView,
     Parser,
+}
+
+trait RenderPlugin {
+    fn get_name(&self) -> &str;
+    fn draw<B: Backend>(&mut self, f: &mut Frame<B>, area: Rect);
+}
+
+pub struct FileManager<'a> {
+    pub name: String,
+    pub curr_dir: &'a Path,
+    pub state: ListState,
+}
+
+impl<'a> FileManager<'a> {
+    pub fn new(curr_dir: &'a str) -> FileManager {
+        FileManager {
+            name: String::from("FileManager"),
+            curr_dir: Path::new(curr_dir),
+            state: ListState::default(),
+        }
+    }
+}
+
+impl<'a> RenderPlugin for FileManager<'a> {
+    fn get_name(&self) -> &str {
+        self.name.as_ref()
+    }
+
+    fn draw<B: Backend>(&mut self, f: &mut Frame<B>, area: Rect) {
+        let dir_style = Style::default().fg(Color::Blue);
+        let file_style = Style::default().fg(Color::Yellow);
+        let default_style = Style::default().fg(Color::White);
+
+        let dir_entries: Vec<ListItem> = self.curr_dir
+            .read_dir().expect("read_dir call failed")
+            .map(|entry| {
+                if let Ok(entry) = entry {
+                    if entry.path().is_dir() {
+                        ListItem::new(vec![Spans::from(vec![
+                            Span::styled(entry.path().to_str().unwrap().to_string(), dir_style)
+                        ])])
+                    } else {
+                        ListItem::new(vec![Spans::from(vec![
+                            Span::styled(entry.path().to_str().unwrap().to_string(), file_style)
+                        ])])
+                    }
+                } else {
+                        ListItem::new(vec![Spans::from(vec![
+                            Span::styled(format!("fdak;l"),file_style)
+                        ])])
+
+                }
+            })
+            .collect();
+        let entries = List::new(dir_entries);
+        f.render_stateful_widget(entries, area, &mut self.state);
+    }
 }
 
 /// Struct to hold an application for each tab
 pub struct App<'a,> {
     pub title: &'a str,
-    pub grid: ColumnsState,
+    pub grid: ColumnsState<'a>,
 }
 
-pub struct ColumnsState {
-    pub columns: Vec<PluginsState>,
+pub struct ColumnsState<'a> {
+    pub columns: Vec<PluginsState<'a>>,
     pub index: usize,
 }
 
-impl ColumnsState {
-    pub fn new(columns: Vec<PluginsState>) -> ColumnsState {
+impl<'a> ColumnsState<'a> {
+    pub fn new(columns: Vec<PluginsState<'a>>) -> ColumnsState {
         ColumnsState { columns, index: 0 }
     }
 
@@ -46,7 +106,7 @@ impl ColumnsState {
     }
 
     /// Add a new plugin to the right of this one
-    pub fn add_plugin(&mut self, plugin: Plugin) {
+    pub fn add_plugin(&mut self, plugin: Plugin<'a>) {
         // If the selected column is the last one, we make a new column
         if self.index == self.columns.len() - 1 {
             // Create a new strip of plugins containing this plugin
@@ -92,13 +152,13 @@ impl ColumnsState {
     }
 }
 
-pub struct PluginsState {
-    pub plugins: Vec<Plugin>,
+pub struct PluginsState<'a> {
+    pub plugins: Vec<Plugin<'a>>,
     pub index: usize,
 }
 
-impl PluginsState {
-    pub fn new(plugins: Vec<Plugin>) -> PluginsState {
+impl<'a> PluginsState<'a> {
+    pub fn new(plugins: Vec<Plugin<'a>>) -> PluginsState {
         PluginsState { plugins, index: 0 }
     }
 
@@ -116,7 +176,7 @@ impl PluginsState {
 }
 
 impl<'a> App<'a> {
-    pub fn new(title: &'a str, grid: ColumnsState) -> App {
+    pub fn new(title: &'a str, grid: ColumnsState<'a>) -> App<'a> {
         App { title, grid }
     }
 
@@ -150,7 +210,7 @@ impl<'a> App<'a> {
             .direction(Direction::Horizontal)
             .split(area);
 
-        for (i, col) in self.grid.columns.iter().enumerate() {
+        for (i, col) in self.grid.columns.iter_mut().enumerate() {
             // Get the number of plugins to render
             let nplugins = col.plugins.len();
 
@@ -173,7 +233,7 @@ impl<'a> App<'a> {
                 .split(col_chunks[i]);
 
             // Now we render each plugin
-            for (j, _line) in col.plugins.iter().enumerate() {
+            for (j, line) in col.plugins.iter_mut().enumerate() {
                 let mut plugin = Block::default().borders(Borders::ALL)
                     .title(format!("Plugin{}", j));
 
@@ -187,6 +247,10 @@ impl<'a> App<'a> {
                         .border_style(Style::default().fg(Color::White))
                 }
                 f.render_widget(plugin, line_chunks[j]);
+                match line {
+                    Plugin::FileManager(fm) => fm.draw(f, line_chunks[j]),
+                    _ => {},
+                }
             }
         }
     }
@@ -237,7 +301,7 @@ impl<'a> MagLabApp<'a> {
     }
 
     /// Add a new plugin to the current tab
-    pub fn add_plugin(&mut self, plugin: Plugin) {
+    pub fn add_plugin(&mut self, plugin: Plugin<'a>) {
         self.tabs.apps[self.tabs.index].grid.add_plugin(plugin);
     }
 
