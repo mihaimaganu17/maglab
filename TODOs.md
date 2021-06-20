@@ -3,6 +3,10 @@ Implemented:
 2. Each tab holds a Child App-> Similar to a separate instance of the program
 3. Each app renders a Grid of plugins(so far no functionality)
 
+Next Session:
+1. File Manager: Render the name of the plugin and the plugin properly
+2. Add file selection to the File Manager listing dirs
+
 TODO Housekeeping:
 1. Implement creating a new tab
 2. Implmenet deleting a tab
@@ -12,6 +16,7 @@ TODO Housekeeping:
 6. The default tab name is the focus plugins name
 
 TODO:
+1. Add a strip for the controls you can use in the current plugin
 5. Create a trait for a plugin
 6. Render the plugin name in the block instead of junk names
 7. Implement 3 example plugins(FileManager, HexView, Dissassembleview, Hexview)
