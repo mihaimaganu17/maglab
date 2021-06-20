@@ -67,13 +67,28 @@ impl ColumnsState {
 
     /// Remove the current focused plugin
     pub fn remove_plugin(&mut self) {
-        // If we are the only plugin left, we remove the tab
-        if self.columns.len() == 1 && self.columns[self.index].index == 1 {
+        // Get number of columns
+        let ncols = self.columns.len();
 
+        // Get the lines and number of lines
+        let lines = &mut self.columns[self.index];
+        let nlines = lines.plugins.len();
+
+        if ncols > 1 && nlines == 1 {
+            // If we have one last plugin on this column, we remove the column
+            // as well
+            self.columns.remove(self.index);
+            if self.index == ncols - 1 {
+                self.previous();
+            }
+        } else {
+            lines.plugins.remove(lines.index);
+            // If we are on the last line/plugin, we focus the previous one
+            // Otherwise we keep the the line index
+            if lines.index == nlines - 1 {
+                lines.previous();
+            }
         }
-        // If we are the only plugin left in the column, we also remove the
-        // column
-
     }
 }
 
@@ -228,11 +243,8 @@ impl<'a> MagLabApp<'a> {
 
     /// Remove the current focused plugin
     pub fn remove_plugin(&mut self) {
-        // Get the current tab
-        let tab = &mut self.tabs.apps[self.tabs.index];
-
         // Get columns and number of columns
-        let cols = &mut tab.grid;
+        let cols = &mut self.tabs.apps[self.tabs.index].grid;
         let ncols = cols.columns.len();
 
         // Get the lines and number of lines
@@ -241,33 +253,11 @@ impl<'a> MagLabApp<'a> {
 
         // Check if we are the only plugin left
         if ncols == 1 && nlines == 1 {
-            // If we are on the last tab left, we exit the app
-            if self.tabs.apps.len() == 1 {
-                // Send the quit signal to the master app
-                self.should_quit = true;
-            } else {
-                // We remove the current tab
-                self.tabs.apps.remove(self.tabs.index);
-                // If the tab was on the last index, we go to the previous one,
-                // otherwise we keep the index
-                if self.tabs.index == self.tabs.apps.len() - 1 {
-                    self.tabs.previous();
-                }
-            }
-        } else if ncols > 1 && nlines == 1 {
-            // If we have one last plugin on this column, we remove the column
-            // as well
-            cols.columns.remove(cols.index);
-            if cols.index == ncols - 1 {
-                cols.previous();
-            }
+            // If yes remove the current tab as well
+            self.should_quit = self.tabs.remove_tab();
         } else {
-            lines.plugins.remove(lines.index);
-            // If we are on the last line/plugin, we focus the previous one
-            // Otherwise we keep the the line index
-            if lines.index == nlines - 1 {
-                lines.previous();
-            }
+            // If not, just remove the plugin
+            cols.remove_plugin();
         }
     }
 

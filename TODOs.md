@@ -8,12 +8,10 @@ TODO Housekeeping:
 2. Implmenet deleting a tab
 3. Create a default tab configuration
 4. Create a default plugin configuration for the new tabs
+5. Renaming a tab
+6. The default tab name is the focus plugins name
 
 TODO:
-1. Implement adding a new plugin
-2. Implement removing a plugin
-3. Both above should be aware of the current selected block/plugin/window
-4. Connect adding/removing a new plugin to UserInterface
 5. Create a trait for a plugin
 6. Render the plugin name in the block instead of junk names
 7. Implement 3 example plugins(FileManager, HexView, Dissassembleview, Hexview)
@@ -40,3 +38,7 @@ HardTODO:
 DONE:
 1. Moving between tabs
 2. Moving between plugins
+3. Implement adding a new plugin
+4. Implement removing a plugin
+5. Both above are aware of the current selected block/plugin/window
+6. Connect adding/removing a new plugin to UserInterface

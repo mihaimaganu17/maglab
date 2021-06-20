@@ -27,5 +27,24 @@ impl<'a> TabsState<'a> {
             self.index = self.apps.len() - 1;
         }
     }
+
+    /// Remove the current focused tab
+    /// Returns true if it is the last tab remainning in the app
+    pub fn remove_tab(&mut self) -> bool {
+        // If this is the last tab remainning in the app, return true
+        if self.apps.len() == 1 {
+            return true
+        }
+
+        // We remove the current tab
+        self.apps.remove(self.index);
+        // If the tab was on the last index, we go to the previous one,
+        // otherwise we keep the index
+        if self.index == self.apps.len() - 1 {
+            self.previous();
+        }
+
+        return false
+    }
 }
 
