@@ -126,15 +126,6 @@ fn main() -> Result<(), Box<dyn Error>>{
         match rx.recv()? {
             Event::Input(event) => {
                 if event == key_conf.quit {
-                    // Get terminal back into normal mode
-                    disable_raw_mode()?;
-                    // Leave our crossterm screen
-                    execute!(
-                        terminal.backend_mut(),
-                        LeaveAlternateScreen,
-                        DisableMouseCapture,
-                    )?;
-                    terminal.show_cursor()?;
                     mag_lab_app.should_quit = true;
                     break;
                 } else if event == key_conf.tab_left {
@@ -149,7 +140,11 @@ fn main() -> Result<(), Box<dyn Error>>{
                     mag_lab_app.focus_up();
                 } else if event == key_conf.focus_down {
                     mag_lab_app.focus_down();
-                };
+                } else if event == key_conf.new_plugin {
+                    mag_lab_app.add_plugin(Plugin::HexView);
+                } else if event == key_conf.remove_plugin {
+                    mag_lab_app.remove_plugin();
+                }
             },
 
             Event::Tick => {},
@@ -159,6 +154,15 @@ fn main() -> Result<(), Box<dyn Error>>{
 
         // Check if we should exit the app
         if mag_lab_app.should_quit {
+            // Get terminal back into normal mode
+            disable_raw_mode()?;
+            // Leave our crossterm screen
+            execute!(
+                terminal.backend_mut(),
+                LeaveAlternateScreen,
+                DisableMouseCapture,
+            )?;
+            terminal.show_cursor()?;
             break;
         }
 

@@ -44,6 +44,37 @@ impl ColumnsState {
             self.index = self.columns.len() - 1;
         }
     }
+
+    /// Add a new plugin to the right of this one
+    pub fn add_plugin(&mut self, plugin: Plugin) {
+        // If the selected column is the last one, we make a new column
+        if self.index == self.columns.len() - 1 {
+            // Create a new strip of plugins containing this plugin
+            let plugin_state = PluginsState::new(vec![plugin]);
+            self.columns.push(plugin_state);
+        } else {
+            // If we are not on the last column, we insert the new plugin
+            // as the first one in the strip on the immediate right column
+            self.columns[self.index + 1].plugins.insert(0usize, plugin);
+        }
+
+        // Whatever the case we want to focus the new plugin we created and
+        // we know that it will always be on the next column on the 
+        // first(index=0) line
+        self.index += 1;
+        self.columns[self.index].index = 0;
+    }
+
+    /// Remove the current focused plugin
+    pub fn remove_plugin(&mut self) {
+        // If we are the only plugin left, we remove the tab
+        if self.columns.len() == 1 && self.columns[self.index].index == 1 {
+
+        }
+        // If we are the only plugin left in the column, we also remove the
+        // column
+
+    }
 }
 
 pub struct PluginsState {
@@ -188,6 +219,56 @@ impl<'a> MagLabApp<'a> {
 
     pub fn focus_down(&mut self) {
         self.tabs.apps[self.tabs.index].next_line();
+    }
+
+    /// Add a new plugin to the current tab
+    pub fn add_plugin(&mut self, plugin: Plugin) {
+        self.tabs.apps[self.tabs.index].grid.add_plugin(plugin);
+    }
+
+    /// Remove the current focused plugin
+    pub fn remove_plugin(&mut self) {
+        // Get the current tab
+        let tab = &mut self.tabs.apps[self.tabs.index];
+
+        // Get columns and number of columns
+        let cols = &mut tab.grid;
+        let ncols = cols.columns.len();
+
+        // Get the lines and number of lines
+        let lines = &mut cols.columns[cols.index];
+        let nlines = lines.plugins.len();
+
+        // Check if we are the only plugin left
+        if ncols == 1 && nlines == 1 {
+            // If we are on the last tab left, we exit the app
+            if self.tabs.apps.len() == 1 {
+                // Send the quit signal to the master app
+                self.should_quit = true;
+            } else {
+                // We remove the current tab
+                self.tabs.apps.remove(self.tabs.index);
+                // If the tab was on the last index, we go to the previous one,
+                // otherwise we keep the index
+                if self.tabs.index == self.tabs.apps.len() - 1 {
+                    self.tabs.previous();
+                }
+            }
+        } else if ncols > 1 && nlines == 1 {
+            // If we have one last plugin on this column, we remove the column
+            // as well
+            cols.columns.remove(cols.index);
+            if cols.index == ncols - 1 {
+                cols.previous();
+            }
+        } else {
+            lines.plugins.remove(lines.index);
+            // If we are on the last line/plugin, we focus the previous one
+            // Otherwise we keep the the line index
+            if lines.index == nlines - 1 {
+                lines.previous();
+            }
+        }
     }
 
     /// Called when pressing any other key

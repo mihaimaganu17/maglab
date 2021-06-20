@@ -3,6 +3,12 @@ Implemented:
 2. Each tab holds a Child App-> Similar to a separate instance of the program
 3. Each app renders a Grid of plugins(so far no functionality)
 
+TODO Housekeeping:
+1. Implement creating a new tab
+2. Implmenet deleting a tab
+3. Create a default tab configuration
+4. Create a default plugin configuration for the new tabs
+
 TODO:
 1. Implement adding a new plugin
 2. Implement removing a plugin
@@ -27,3 +33,10 @@ TODO:
 12. Create different layout modes to be selected:
     - For example, make a master window that permanently ocupies half the
         space and the other plugins the rest of the space
+
+HardTODO:
+1. Stash changes like git(actions)
+
+DONE:
+1. Moving between tabs
+2. Moving between plugins
